@@ -1,0 +1,5 @@
+FONT_FILE = "fonts/terminal.bdf"
+SENSOR_URI = "http://localhost:5002/sensor"
+OWM_API_KEY = ""
+OWM_LAT = ""
+OWM_LON = ""
