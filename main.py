@@ -33,10 +33,11 @@ async def get_sensor_reading():
 class Display:
     def __init__(self):
         # GPIO setup
-        # BACKLIGHT_PIN = 22
-        # GPIO.setmode(GPIO.BCM)
-        # GPIO.setup(BACKLIGHT_PIN, GPIO.OUT)
-        # self.display_on = True  # Track the display state
+        self.BACKLIGHT_PIN = 4
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.BACKLIGHT_PIN, GPIO.OUT)
+        GPIO.output(self.BACKLIGHT_PIN, GPIO.LOW)
+        self.display_on = True  # Track the display state
 
         self.display = display.init_display()
 
@@ -140,9 +141,25 @@ class Display:
         self.outside_lock = asyncio.Lock()
         self.inside_updated = False
         self.outside_updated = False
+    
+    def is_display_active(self) -> bool:
+        current_hour = time.localtime().tm_hour
+        if current_hour > 23 or current_hour < 9:
+            if self.display_on:
+                GPIO.output(self.BACKLIGHT_PIN, GPIO.HIGH)
+                self.display_on = False
+            return False
+        else:
+            if not self.display_on:
+                GPIO.output(self.BACKLIGHT_PIN, GPIO.LOW)
+                self.display_on = True
+            return True
 
     async def update_outside_values(self):
         while True:
+            if not self.display_on:
+                await asyncio.sleep(3600)
+                continue
             try:
                 reading = await openweathermap.get_owm_reading()
                 if reading:
@@ -184,12 +201,9 @@ class Display:
 
     async def update_temperature(self):
         while True:
-            # current_hour = time.localtime().tm_hour
-            # if current_hour > 23 or current_hour < 9:
-            #     self.display.brightness = 0
-            #     await asyncio.sleep(3600)
-            #     continue
-            # self.display.sleep()
+            if not self.display_on:
+                await asyncio.sleep(3600)
+                continue
             try:
                 # Retrieve temperature, humidity, and pressure from the JSON response
                 reading = await get_sensor_reading()
@@ -205,10 +219,9 @@ class Display:
 
 
     async def update_labels(self):
-        # t = time.localtime()
-        # self.date_label.text = f"{DAYS[int(t.tm_wday)]}, {t.tm_mday}/{t.tm_mon}/{t.tm_year}"
-        # self.time_label.text = f"{t.tm_hour:02}{':' if self.semicolon else ' '}{t.tm_min:02}"
-        # self.semicolon = not self.semicolon # Cycle semicolon on and off
+        if not self.display_on:
+            return
+        
         async with self.outside_lock:
             self.temperature_out_value_label.text = self.outside_temperature
             self.humidity_out_value_label.text = self.outside_humidity
@@ -231,6 +244,9 @@ async def main():
 
         logging.info("Entering loop")
         while True:
+            if not display.is_display_active():
+                await asyncio.sleep(3600)
+                continue
             try:
                 await display.update_labels()
                 display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
