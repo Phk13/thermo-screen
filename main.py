@@ -233,7 +233,7 @@ class Display:
             self.pressure_in_value_label.text = self.pressure
 
 async def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     try:
 
         display = Display()
@@ -251,11 +251,11 @@ async def main():
                 await display.update_labels()
                 display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
             except Exception as e:
-                logging.error(e)
+                logging.error(e, exc_info=True)
                 display.status_square.fill = 0xFF0000
             await asyncio.sleep(1)
     except Exception as e:
-        logging.error(e)
+        logging.error(e, exc_info=True)
         [task.cancel() for task in tasks]
 
 
