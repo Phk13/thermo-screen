@@ -8,6 +8,6 @@ if [ -f "$PID_FILE" ]; then
         exit
     fi
 fi
-nohup python3 main.py > debug.log 2>&1 & 
+nohup python3 main.py >> debug.log 2>&1 & 
 echo $! > $PID_FILE
 echo "Started with PID $!"
