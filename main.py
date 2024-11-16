@@ -38,7 +38,7 @@ class Display:
         GPIO.setup(self.BACKLIGHT_PIN, GPIO.OUT)
         GPIO.output(self.BACKLIGHT_PIN, GPIO.LOW)
         self.display_on = True  # Track the display state
-
+        self.blink_on = False  # Track the blink state
         self.display = display.init_display()
 
         # Load the font file for text rendering
@@ -249,7 +249,11 @@ async def main():
                 continue
             try:
                 await display.update_labels()
-                display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
+                if display.blink_on:
+                    display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
+                else:
+                    display.status_square.fill = 0xFF0000
+                display.blink_on = not display.blink_on
             except Exception as e:
                 logging.error(e, exc_info=True)
                 display.status_square.fill = 0xFF0000
