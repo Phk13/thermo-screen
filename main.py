@@ -223,12 +223,12 @@ class Display:
             return
         
         async with self.outside_lock:
-            self.temperature_out_value_label.text = self.outside_temperature
+            self.temperature_out_value_label.text = self.outside_temperature.ljust(5, " ")
             self.humidity_out_value_label.text = self.outside_humidity
             self.pressure_out_value_label.text = self.outside_pressure
 
         async with self.inside_lock:
-            self.temperature_in_value_label.text = self.temperature
+            self.temperature_in_value_label.text = self.temperature.ljust(5, " ")
             self.humidity_in_value_label.text = self.humidity
             self.pressure_in_value_label.text = self.pressure
 
