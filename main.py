@@ -252,7 +252,7 @@ async def main():
                 if display.blink_on:
                     display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
                 else:
-                    display.status_square.fill = 0xFF0000
+                    display.status_square.fill = 0x000000
                 display.blink_on = not display.blink_on
             except Exception as e:
                 logging.error(e, exc_info=True)
