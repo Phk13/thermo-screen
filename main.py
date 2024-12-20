@@ -30,6 +30,7 @@ async def get_sensor_reading():
             print(f"Request failed: {e}")
             return None
 
+
 class Display:
     def __init__(self):
         # GPIO setup
@@ -42,12 +43,12 @@ class Display:
         self.display = display.init_display()
 
         # Load the font file for text rendering
-        
+
         font = bitmap_font.load_font(config.FONT_FILE)
         if not font:
             logging.error("Invalid font")
         logging.info("Font loaded")
-        
+
         self.outside_temperature = "0ºC"
         self.temperature = "0ºC"
         self.outside_humidity = "0%"
@@ -56,32 +57,32 @@ class Display:
         self.pressure = "0 hPa"
 
         # Create outside label
-        self.outside_label = label.Label(font, color=0xFFA500, text = "OUTSIDE")
+        self.outside_label = label.Label(font, color=0xFFA500, text="OUTSIDE")
         self.outside_label.anchor_point = (0.5, 0.0)
         self.outside_label.anchored_position = (64, 5)
 
         # Create temperature label
-        self.inside_label = label.Label(font, color=0xFFA500, text = "INSIDE")
+        self.inside_label = label.Label(font, color=0xFFA500, text="INSIDE")
         self.inside_label.anchor_point = (0.5, 0.0)
         self.inside_label.anchored_position = (64, 64)
-        
+
         # Create outside label
-        self.outside_sec_label = label.Label(font, color=0xFFA500, text = "OUT")
+        self.outside_sec_label = label.Label(font, color=0xFFA500, text="OUT")
         self.outside_sec_label.anchor_point = (0.3, 0.0)
         self.outside_sec_label.anchored_position = (70, 125)
 
         # Create inside label
-        self.inside_sec_label = label.Label(font, color=0xFFA500, text = "IN")
+        self.inside_sec_label = label.Label(font, color=0xFFA500, text="IN")
         self.inside_sec_label.anchor_point = (0.3, 0.0)
         self.inside_sec_label.anchored_position = (70, 140)
 
         # Create humidity label
-        self.humidity_label = label.Label(font, color=0x1E90FF, text = "HUM")
+        self.humidity_label = label.Label(font, color=0x1E90FF, text="HUM")
         self.humidity_label.anchor_point = (1.0, 0.0)
         self.humidity_label.anchored_position = (110, 110)
 
         # Create pressure label
-        self.pressure_label = label.Label(font, color=0x32CD32, text = "PRESS")
+        self.pressure_label = label.Label(font, color=0x32CD32, text="PRESS")
         self.pressure_label.anchor_point = (0.0, 0.0)
         self.pressure_label.anchored_position = (18, 110)
 
@@ -141,7 +142,7 @@ class Display:
         self.outside_lock = asyncio.Lock()
         self.inside_updated = False
         self.outside_updated = False
-    
+
     def is_display_active(self) -> bool:
         current_hour = time.localtime().tm_hour
         if current_hour > 23 or current_hour < 9:
@@ -194,7 +195,6 @@ class Display:
         icon_tilegrid = displayio.TileGrid(icon_bitmap, pixel_shader=icon_palette)
         icon_tilegrid.x = 96  # X position
         icon_tilegrid.y = 40  # Y position
-        
 
         # Append the icon to the display group
         self.display.root_group.append(icon_tilegrid)
@@ -217,11 +217,10 @@ class Display:
                 self.inside_updated = False
             await asyncio.sleep(3)
 
-
     async def update_labels(self):
         if not self.display_on:
             return
-        
+
         async with self.outside_lock:
             self.temperature_out_value_label.text = self.outside_temperature.ljust(5, " ")
             self.humidity_out_value_label.text = self.outside_humidity
@@ -231,6 +230,7 @@ class Display:
             self.temperature_in_value_label.text = self.temperature.ljust(5, " ")
             self.humidity_in_value_label.text = self.humidity
             self.pressure_in_value_label.text = self.pressure
+
 
 async def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -260,7 +260,7 @@ async def main():
             await asyncio.sleep(1)
     except Exception as e:
         logging.error(e, exc_info=True)
-        [task.cancel() for task in tasks]
+        asyncio.gather([task.cancel() for task in tasks])
 
 
 if __name__ == "__main__":
