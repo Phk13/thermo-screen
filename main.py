@@ -165,11 +165,11 @@ class Display:
                 reading = await openweathermap.get_owm_reading()
                 if reading:
                     async with self.outside_lock:
-                        self.outside_temperature = f"{reading.get('main').get('temp'):.1f}ºC"
-                        self.outside_humidity = f"{reading.get('main').get('humidity')}%"
-                        self.outside_pressure = f"{reading.get('main').get('pressure')} hPa"
+                        self.outside_temperature = f"{reading['main'].get('temp'):.1f}ºC"
+                        self.outside_humidity = f"{reading['main'].get('humidity')}%"
+                        self.outside_pressure = f"{reading['main'].get('pressure')} hPa"
                         # logging.info(reading)
-                        self.weather_icon = f"icons/{reading.get('weather')[0].get('icon')}@2x.bmp"
+                        # self.weather_icon = f"icons/{reading.get('weather')[0].get('icon')}@2x.bmp"
                         # logging.info(f"Icon: {self.weather_icon}")
                         # self.update_weather_icon()
                         self.outside_updated = True
@@ -207,11 +207,12 @@ class Display:
             try:
                 # Retrieve temperature, humidity, and pressure from the JSON response
                 reading = await get_sensor_reading()
-                async with self.inside_lock:
-                    self.temperature = f"{reading['temperature']:.1f}ºC"
-                    self.humidity = f"{reading['humidity']:.1f}%"
-                    self.pressure = f"{reading['pressure']:.0f} hPa"
-                    self.inside_updated = True
+                if reading:
+                    async with self.inside_lock:
+                        self.temperature = f"{reading['temperature']:.1f}ºC"
+                        self.humidity = f"{reading['humidity']:.1f}%"
+                        self.pressure = f"{reading['pressure']:.0f} hPa"
+                        self.inside_updated = True
             except Exception as e:
                 logging.error(e)
                 self.inside_updated = False
@@ -236,31 +237,37 @@ async def main():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     try:
 
-        display = Display()
+        display_controller = Display()
+        display_controller.display.auto_refresh = False
         tasks = [
-            asyncio.create_task(display.update_temperature()),
-            asyncio.create_task(display.update_outside_values()),
+            asyncio.create_task(display_controller.update_temperature()),
+            asyncio.create_task(display_controller.update_outside_values()),
         ]
 
         logging.info("Entering loop")
         while True:
-            if not display.is_display_active():
+            if not display_controller.is_display_active():
                 await asyncio.sleep(3600)
+                display_controller.display.refresh()
                 continue
             try:
-                await display.update_labels()
-                if display.blink_on:
-                    display.status_square.fill = 0x00FF00 if display.outside_updated and display.inside_updated else 0xFF0000
+                await display_controller.update_labels()
+                if display_controller.blink_on:
+                    display_controller.status_square.fill = 0x00FF00 if display_controller.outside_updated and display_controller.inside_updated else 0xFF0000
                 else:
-                    display.status_square.fill = 0x000000
-                display.blink_on = not display.blink_on
+                    display_controller.status_square.fill = 0x000000
+                display_controller.blink_on = not display_controller.blink_on
+                display_controller.display.refresh()
             except Exception as e:
                 logging.error(e, exc_info=True)
-                display.status_square.fill = 0xFF0000
+                display_controller.status_square.fill = 0xFF0000
+                display_controller.display.refresh()
             await asyncio.sleep(1)
     except Exception as e:
         logging.error(e, exc_info=True)
         asyncio.gather([task.cancel() for task in tasks])
+    finally:
+        GPIO.cleanup()
 
 
 if __name__ == "__main__":
